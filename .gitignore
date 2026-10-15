@@ -1,0 +1,6 @@
+node_modules/
+*-baseline.json
+baseline.json
+*.bak
+*.bak-*
+*.backup
