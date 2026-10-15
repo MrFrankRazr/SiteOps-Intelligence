@@ -26,11 +26,18 @@ export async function resolvePublic(hostname) {
   if (!records.length || records.some(r=>rejectPrivateIp(r.address))) throw new Error('Non-public or unresolved hostname');
   return records[0];
 }
+export function pinnedLookup(address) {
+  if (!address || !net.isIP(address.address) || ![4,6].includes(address.family)) throw new Error('Invalid pinned DNS address');
+  return (_hostname, options, callback) => {
+    if (options?.all) callback(null, [{address:address.address, family:address.family}]);
+    else callback(null, address.address, address.family);
+  };
+}
 function fetchOnce(u, address) {
   return new Promise((resolve,reject)=>{
     const mod=u.protocol==='https:'?https:http;
     const req=mod.get(u,{
-      lookup:(_name,_opts,cb)=>cb(null,address.address,address.family),
+      lookup:pinnedLookup(address),
       headers:{'user-agent':'SiteOpsIntelligence-Prototype/0.2 (+manual authorized scanning)','accept':'text/html,application/xhtml+xml;q=0.9,*/*;q=0.2'},
       timeout:TIMEOUT_MS, agent:false, maxHeaderSize:16_384
     },res=>{
