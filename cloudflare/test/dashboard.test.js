@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import worker,{compare} from '../src/index.js';
+import {loginPage,dashboardPage} from '../src/dashboard.js';
+const env={SCAN_API_KEY:'test-key-secret',TEST_TARGET:'https://mrfrankrazr.github.io/SiteOps-Intelligence/', DB:{prepare(sql){return {bind(){return {all:async()=>({results:[]})}}}}}};
+test('login page uses password field',()=>assert.match(loginPage(),/type="password"/));
+test('dashboard has scan button and history view',()=>{const h=dashboardPage(env.TEST_TARGET);assert.match(h,/Run Scan/);assert.match(h,/api\/history/);assert.doesNotMatch(h,/test-key-secret/)});
+test('unauthenticated history is blocked',async()=>{const r=await worker.fetch(new Request('https://example.workers.dev/api/history'),env);assert.equal(r.status,401)});
+test('unauthenticated scan is blocked',async()=>{const r=await worker.fetch(new Request('https://example.workers.dev/api/scan',{method:'POST',body:'{}'}),env);assert.equal(r.status,401)});
+test('history for authorized bearer is available',async()=>{const r=await worker.fetch(new Request('https://example.workers.dev/api/history',{headers:{authorization:'Bearer test-key-secret'}}),env);assert.equal(r.status,200);assert.deepEqual((await r.json()).scans,[])});
+test('comparison detects critical error',()=>assert.equal(compare({status:200},{status:404}).critical,1));

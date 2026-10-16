@@ -1,0 +1,16 @@
+{
+  "name": "siteops-scanner-test",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": {
+    "TEST_TARGET": "https://mrfrankrazr.github.io/SiteOps-Intelligence/",
+    "DASHBOARD_ORIGIN": "https://siteops-scanner-test.paddockcommand.workers.dev"
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "siteops-scans-test",
+    "database_id": "a9002774-1e73-43ac-8cc4-b4ebdd213106"
+  }]
+}
