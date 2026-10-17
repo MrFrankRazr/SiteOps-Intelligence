@@ -1,3 +1,4 @@
+import {createScanAndReport, scheduledScan, reportHtml} from './reports.js';
 import {loginPage, dashboardPage} from './dashboard.js';
 const json = (data, status=200) => new Response(JSON.stringify(data), {status, headers: {'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'}});
 const MAX_BYTES = 256000;
@@ -42,9 +43,12 @@ async function scan(raw, env) {
   throw new Error('Unexpected redirect state');
 }
 export default {
+  async scheduled(controller,env,ctx) {
+    ctx.waitUntil(scheduledScan(env,scan,compare));
+  },
   async fetch(request,env) {
     const url=new URL(request.url);
-    if(url.pathname==='/health' && request.method==='GET') return json({ok:true,release:'0.4.0'});
+    if(url.pathname==='/health' && request.method==='GET') return json({ok:true,release:'0.5.0'});
     const html=(markup,status=200,extra={})=>new Response(markup,{status,headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-frame-options':'DENY','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",...extra}});
     if(!env.SCAN_API_KEY || !env.DB || !env.TEST_TARGET) return json({error:'Backend not configured'},503);
     const cookie=request.headers.get('cookie')||'';
@@ -90,6 +94,19 @@ export default {
       return new Response(null,{status:303,headers:{location:'/dashboard','set-cookie':'siteops_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'}});
     }
     if((url.pathname==='/'||url.pathname==='/dashboard') && request.method==='GET') return session?dashboardResponse(env.TEST_TARGET):loginResponse();
+    // SiteOps v0.5 report routes: authenticated access only.
+    if(url.pathname==='/api/reports' && request.method==='GET') {
+      if(!authenticated) return json({error:'Unauthorized'},401);
+      const rows=await env.DB.prepare('SELECT id,scan_id,website,created_at,source,report_json FROM reports WHERE website=? ORDER BY id DESC LIMIT 30').bind(env.TEST_TARGET).all();
+      return json({reports:rows.results.map(r=>({id:r.id,scanId:r.scan_id,website:r.website,createdAt:r.created_at,source:r.source,outcome:JSON.parse(r.report_json).outcome}))});
+    }
+    const reportMatch=url.pathname.match(/^\/api\/reports\/(\d+)\/html$/);
+    if(reportMatch && request.method==='GET') {
+      if(!authenticated) return json({error:'Unauthorized'},401);
+      const row=await env.DB.prepare('SELECT report_json FROM reports WHERE id=? AND website=?').bind(Number(reportMatch[1]),env.TEST_TARGET).first();
+      if(!row) return json({error:'Report not found'},404);
+      return new Response(reportHtml(JSON.parse(row.report_json)),{headers:{'content-type':'text/html; charset=utf-8','cache-control':'private, no-store','x-frame-options':'DENY','x-content-type-options':'nosniff','content-security-policy':"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'"}});
+    }
     if(url.pathname==='/api/history' && request.method==='GET') {
       if(!authenticated) return json({error:'Unauthorized'},401);
       const target=allowedTarget(env.TEST_TARGET,env).href;
@@ -105,12 +122,8 @@ export default {
     let target;
     try{target=allowedTarget(submitted,env);}catch{return json({error:'Only the configured test website is allowed'},400);}
     try {
-      const previousRow=await env.DB.prepare('SELECT result_json FROM scans WHERE website = ? ORDER BY id DESC LIMIT 1').bind(target.href).first();
-      const previous=previousRow?JSON.parse(previousRow.result_json):null;
-      const current=await scan(target.href,env);
-      const result=compare(previous,current);
-      await env.DB.prepare('INSERT INTO scans (website,checked_at,result_json,comparison_json) VALUES (?,?,?,?)').bind(target.href,current.checkedAt,JSON.stringify(current),JSON.stringify(result)).run();
-      return json({scan:current,comparison:result});
+      const result=await createScanAndReport(env,scan,compare,'manual');
+      return json(result);
     }catch(e){return json({error:'Scan unsuccessful',detail:String(e?.message||e).slice(0,180)},502);}
   }
 };

@@ -12,5 +12,8 @@
     "binding": "DB",
     "database_name": "siteops-scans-test",
     "database_id": "a9002774-1e73-43ac-8cc4-b4ebdd213106"
-  }]
+  }],
+  "triggers": {
+    "crons": ["0 8 * * *"]
+  }
 }

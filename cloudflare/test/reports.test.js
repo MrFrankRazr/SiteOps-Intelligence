@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {buildReport,escapeHtml,reportHtml,scheduledScan} from '../src/reports.js';
+const scan={requestedUrl:'https://example.com/',finalUrl:'https://example.com/',checkedAt:'2026-10-15T00:00:00Z',status:200,title:'Test',canonical:null};
+test('report reflects a clean baseline',()=>{const r=buildReport(scan,{findings:[],critical:0,changed:0,baseline:true},3);assert.equal(r.outcome,'Baseline established');assert.equal(r.scanId,3)});
+test('critical regression is visible',()=>{const r=buildReport({...scan,status:500},{findings:[{field:'HTTP status',before:200,after:500,severity:'critical'}],critical:1,changed:1,baseline:false},5);assert.equal(r.critical,1);assert.match(reportHtml(r),/Critical regression/)});
+test('report HTML escapes untrusted site content',()=>{const r=buildReport({...scan,title:'<script>alert(1)</script>'},{findings:[],critical:0,changed:0,baseline:false},1);assert.doesNotMatch(reportHtml(r),/<script>/);assert.match(reportHtml(r),/&lt;script&gt;/);assert.equal(escapeHtml('a&b'),'a&amp;b')});
+test('scheduled execution requires bindings',async()=>{await assert.rejects(()=>scheduledScan({},async()=>scan,()=>({})),/missing D1/)})
