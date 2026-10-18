@@ -4,3 +4,13 @@ baseline.json
 *.bak
 *.bak-*
 *.backup
+
+# Cloudflare local development state
+.wrangler/
+**/.wrangler/
+
+# Local backup directories
+cloudflare/v04-backup-*/
+
+# Local installation scripts
+Apply-SiteOps-*.ps1
