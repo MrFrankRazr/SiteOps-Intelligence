@@ -4,7 +4,7 @@ export async function resolveOwnershipTxt(name, fetchFn=fetch) {
   const url = new URL('https://cloudflare-dns.com/dns-query');
   url.searchParams.set('name',name);
   url.searchParams.set('type','TXT');
-  const response = await fetchFn(url.href,{headers:{accept:'application/dns-json'},signal:AbortSignal.timeout(5000),redirect:'error'});
+  const response = await fetchFn(url.href,{headers:{accept:'application/dns-json'},signal:AbortSignal.timeout(5000),redirect:'manual'});
   if(!response.ok) throw new Error('DNS resolution unavailable');
   const data = await response.json();
   if(data.Status !== 0 || !Array.isArray(data.Answer)) return [];

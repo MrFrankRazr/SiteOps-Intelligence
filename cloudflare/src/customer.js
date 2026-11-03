@@ -55,7 +55,8 @@ export async function customerRoute(request,env,{resolveTxt}={}){
   if(request.method==='POST'){
     const origin=request.headers.get('origin');
     const site=request.headers.get('sec-fetch-site');
-    if(origin||site==='cross-site'||site==='none')return reply({error:'Cross-origin customer write blocked'},403);
+    const trustedOrigin=env.DASHBOARD_ORIGIN || u.origin;
+    if(site==='cross-site'||site==='none'||(origin && origin!==trustedOrigin)||(!origin && site==='same-origin'))return reply({error:'Cross-origin customer write blocked'},403);
   }
   try {
     if(u.pathname==='/api/customer/accounts'&&request.method==='GET'){

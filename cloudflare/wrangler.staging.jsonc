@@ -1,0 +1,19 @@
+{
+  "name": "siteops-customer-staging",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": {
+    "TEST_TARGET": "https://mrfrankrazr.github.io/SiteOps-Intelligence/",
+    "DASHBOARD_ORIGIN": "https://siteops-customer-staging.paddockcommand.workers.dev",
+    "CUSTOMER_API_ENABLED": "true"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "siteops-customer-staging",
+      "database_id": "a6893a39-5ee0-4c4f-ae68-b0c5d0e721bc"
+    }
+  ]
+}
