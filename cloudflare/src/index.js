@@ -1,4 +1,5 @@
 import {customerPageResponse} from './customer-page.js';
+import {customerHistoryRoute} from './customer-history.js';
 import {customerRoute} from './customer.js';
 import {resolveOwnershipTxt} from './customer-dns.js';
 import {createScanAndReport, scheduledScan, reportHtml} from './reports.js';
@@ -53,7 +54,11 @@ export default {
     const url=new URL(request.url);
     if(url.pathname==='/health' && request.method==='GET') return json({ok:true,release:'0.5.0'});
     if(url.pathname==='/customer' && request.method==='GET') return customerPageResponse(env);
-    if(url.pathname.startsWith('/api/customer/')) return customerRoute(request,env,{resolveTxt:resolveOwnershipTxt});
+    if(url.pathname.startsWith('/api/customer/')) {
+      const historyResponse=await customerHistoryRoute(request,env);
+      if(historyResponse)return historyResponse;
+      return customerRoute(request,env,{resolveTxt:resolveOwnershipTxt});
+    }
     const html=(markup,status=200,extra={})=>new Response(markup,{status,headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-frame-options':'DENY','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",...extra}});
     if(!env.SCAN_API_KEY || !env.DB || !env.TEST_TARGET) return json({error:'Backend not configured'},503);
     const cookie=request.headers.get('cookie')||'';
