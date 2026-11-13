@@ -7,7 +7,8 @@
   "vars": {
     "TEST_TARGET": "https://mrfrankrazr.github.io/SiteOps-Intelligence/",
     "DASHBOARD_ORIGIN": "https://siteops-customer-staging.paddockcommand.workers.dev",
-    "CUSTOMER_API_ENABLED": "true"
+    "CUSTOMER_API_ENABLED": "true",
+	"CUSTOMER_MONITORING_CONTROLS_ENABLED": "true"
   },
   "d1_databases": [
     {

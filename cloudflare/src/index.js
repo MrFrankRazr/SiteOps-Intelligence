@@ -1,5 +1,6 @@
 import {customerPageResponse} from './customer-page.js';
 import {customerHistoryRoute} from './customer-history.js';
+import {customerMonitoringRoute} from './customer-monitoring.js';
 import {customerRoute} from './customer.js';
 import {resolveOwnershipTxt} from './customer-dns.js';
 import {createScanAndReport, scheduledScan, reportHtml} from './reports.js';
@@ -55,6 +56,8 @@ export default {
     if(url.pathname==='/health' && request.method==='GET') return json({ok:true,release:'0.5.0'});
     if(url.pathname==='/customer' && request.method==='GET') return customerPageResponse(env);
     if(url.pathname.startsWith('/api/customer/')) {
+      const monitoringResponse=await customerMonitoringRoute(request,env);
+      if(monitoringResponse)return monitoringResponse;
       const historyResponse=await customerHistoryRoute(request,env);
       if(historyResponse)return historyResponse;
       return customerRoute(request,env,{resolveTxt:resolveOwnershipTxt});
