@@ -2,10 +2,16 @@
 // No outbound fetch, cron, DB queries, or entitlement to scan arbitrary websites.
 // A future adapter must enforce approved destinations at network connection time.
 export function decidePilotScan(input, env = {}) {
+  if (env.CUSTOMER_PILOT_SCAN_ENABLED !== 'true')
+    return Object.freeze({allowed:false,reason:'pilot-disabled'});
+  return evaluatePinnedPilotEligibility(input, env);
+}
+
+// Read-only eligibility shared by the scan gate and the audit.
+export function evaluatePinnedPilotEligibility(input, env = {}) {
   const deny = (reason) => Object.freeze({allowed:false,reason});
   if (env.CUSTOMER_API_ENABLED !== 'true' ||
-      env.CUSTOMER_MONITORING_CONTROLS_ENABLED !== 'true' ||
-      env.CUSTOMER_PILOT_SCAN_ENABLED !== 'true') return deny('pilot-disabled');
+      env.CUSTOMER_MONITORING_CONTROLS_ENABLED !== 'true') return deny('pilot-disabled');
   if (!input || typeof input !== 'object' || Array.isArray(input)) return deny('invalid-input');
   const {accountId,siteId,accountStatus,verificationState,monitoringEnabled,siteUrl} = input;
   const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

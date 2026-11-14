@@ -31,3 +31,9 @@ test('malformed input, unpinned config and invalid identifiers denied',()=>{
   for(const v of [null,[],{}, {...input,accountId:'foo'}])assert.equal(decidePilotScan(v,env).allowed,false);
   assert.equal(decidePilotScan(input,{...env,CUSTOMER_PILOT_TARGET:'https://other.example/'}).allowed,false);
 });
+
+test('audit flags do not open the scan gate when the scan flag is absent',()=>{
+  const {CUSTOMER_PILOT_SCAN_ENABLED:scanFlag,...auditEnv}=env;
+  const decision=decidePilotScan(input,{...auditEnv,CUSTOMER_PILOT_AUDIT_ENABLED:'true',CUSTOMER_PILOT_AUDIT_ROUTE_ENABLED:'true'});
+  assert.deepEqual(decision,{allowed:false,reason:'pilot-disabled'});
+});

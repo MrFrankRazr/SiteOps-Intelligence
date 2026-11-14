@@ -4,7 +4,7 @@ import {pilotEligibilityDryRun} from '../src/customer-pilot-dryrun.js';
 const accountId='3eed56c9-91ed-4be1-897b-ace60995635c';
 const siteId='658c5e7c-d5e9-46ea-8b6e-794649b74a90';
 const url='https://siteops-test.paddockcommand.com/';
-const env={CUSTOMER_API_ENABLED:'true',CUSTOMER_MONITORING_CONTROLS_ENABLED:'true',CUSTOMER_PILOT_SCAN_ENABLED:'true',CUSTOMER_PILOT_ACCOUNT_ID:accountId,CUSTOMER_PILOT_SITE_ID:siteId,CUSTOMER_PILOT_TARGET:url};
+const env={CUSTOMER_API_ENABLED:'true',CUSTOMER_MONITORING_CONTROLS_ENABLED:'true',CUSTOMER_PILOT_ACCOUNT_ID:accountId,CUSTOMER_PILOT_SITE_ID:siteId,CUSTOMER_PILOT_TARGET:url};
 const row={account_id:accountId,site_id:siteId,site_url:url,verification_state:'verified',monitoring_enabled:1,account_status:'active'};
 function fakeDb(record=row) {
   const q={};
@@ -23,8 +23,8 @@ test('pilot disabled by default and no DB operations',async()=>{
   const db={prepare(){throw Error('query not allowed')}};
   assert.equal((await pilotEligibilityDryRun(db,{})).eligibleCount,0);
 });
-test('all three gates required; no query when disabled',async()=>{
-  for(const flag of ['CUSTOMER_API_ENABLED','CUSTOMER_MONITORING_CONTROLS_ENABLED','CUSTOMER_PILOT_SCAN_ENABLED']){
+test('both customer feature flags required; no query when disabled',async()=>{
+  for(const flag of ['CUSTOMER_API_ENABLED','CUSTOMER_MONITORING_CONTROLS_ENABLED']){
     const db={prepare(){throw Error('query not allowed')}};
     assert.equal((await pilotEligibilityDryRun(db,{...env,[flag]:'false'})).eligibleCount,0);
   }

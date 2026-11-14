@@ -6,8 +6,7 @@ export async function summarizePilotDryRun(db,env={}) {
   // A separate opt-in for reading staging D1 in the audit workflow.
   if(env.CUSTOMER_PILOT_AUDIT_ENABLED!=='true' ||
      env.CUSTOMER_API_ENABLED!=='true' ||
-     env.CUSTOMER_MONITORING_CONTROLS_ENABLED!=='true' ||
-     env.CUSTOMER_PILOT_SCAN_ENABLED!=='true') return disabled();
+     env.CUSTOMER_MONITORING_CONTROLS_ENABLED!=='true') return disabled();
   if (!db || typeof db.prepare!=='function')
     return { ...disabled(), state:'unavailable' };
   try {
