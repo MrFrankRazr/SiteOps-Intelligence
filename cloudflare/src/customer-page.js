@@ -23,7 +23,7 @@ return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="v
     try {
       const path = '/api/customer/accounts/' + encodeURIComponent(accountId) +
         '/sites/' + encodeURIComponent(siteId) + '/scans';
-      const {scans} = await api(path);
+      const {scans, incidents} = await api(path);
       if (current !== accountId || !card.isConnected) return;
       if (!Array.isArray(scans)) throw new Error('Unexpected check history response.');
       if (!scans.length) {
@@ -54,6 +54,18 @@ return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="v
       }
       status.textContent = scans.length === 1 ? '1 saved check' : scans.length + ' saved checks';
       history.append(list);
+      if (Array.isArray(incidents) && incidents.length) {
+        const heading = document.createElement('h3');
+        heading.textContent = 'Outage notifications';
+        const notifications = document.createElement('ul');
+        for (const incident of incidents) {
+          const notification = document.createElement('li');
+          notification.textContent = 'HTTP ' + incident.status + ' outage opened ' +
+            incident.openedAt + (incident.closedAt ? ' · Recovered ' + incident.closedAt : ' · Open');
+          notifications.append(notification);
+        }
+        history.append(heading, notifications);
+      }
     } catch {
       if (current === accountId && card.isConnected)
         status.textContent = 'Could not load check history. Try again.';

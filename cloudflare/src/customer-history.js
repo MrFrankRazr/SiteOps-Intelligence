@@ -22,10 +22,18 @@ export async function customerHistoryRoute(request,env){
     .bind(siteId,accountId).first();
   if(!site)return respond({error:'Not found'},404);
   try{
-    if(kind==='scans')return respond({scans:await listCustomerScans(env.DB,{accountId,siteId})});
+    if(kind==='scans'){
+      const scans=await listCustomerScans(env.DB,{accountId,siteId});
+      if(env.CUSTOMER_PILOT_INCIDENTS_ENABLED!=='true')return respond({scans});
+      const incidents=await env.DB.prepare(
+        'SELECT opened_scan_id AS id, opened_at AS openedAt, http_status AS status, closed_at AS closedAt FROM customer_outage_incidents WHERE account_id=? AND site_id=? ORDER BY opened_at DESC, opened_scan_id DESC LIMIT 10'
+      ).bind(accountId,siteId).all();
+      return respond({scans,incidents:incidents.results});
+    }
     return respond({reports:await listCustomerReports(env.DB,{accountId,siteId})});
   }catch{
     // Do not reveal SQL or tenant data in error responses.
     return respond({error:'Customer history temporarily unavailable'},503);
   }
 }
+
