@@ -1,0 +1,20 @@
+{
+  "name": "siteops-pilot-cron-staging",
+  "main": "src/staging-pilot-cron.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "vars": {
+    "PILOT_CRON_ENABLED": "false"
+  },
+  "triggers": {
+    "crons": []
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "siteops-customer-staging",
+      "database_id": "a6893a39-5ee0-4c4f-ae68-b0c5d0e721bc"
+    }
+  ]
+}
